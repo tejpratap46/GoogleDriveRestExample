@@ -12,6 +12,7 @@ import com.tejpratapsingh.gogledriverest.modal.GDDownloadFileResponse;
 import com.tejpratapsingh.gogledriverest.modal.GDUploadFileResponse;
 import com.tejpratapsingh.gogledriverest.modal.GDUserInfo;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -112,31 +113,53 @@ public class GDApiManager {
         });
     }
 
-    public void uploadFile(final GDAuthResponse gdAuthResponse, final File fileToUpload, final String fileMime, final GDUploadFileResponse.OnUploadFileCompleteListener uploadFileListener) {
+    public void uploadFile(final GDAuthResponse gdAuthResponse, final File fileToUpload, final String fileMime, final boolean uploadToAppFolder, final GDUploadFileResponse.OnUploadFileCompleteListener uploadFileListener) {
 
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
-                MediaType mediaMimeType = MediaType.parse(fileMime);
-
-                Request request = new Request.Builder()
-                        .url("https://www.googleapis.com/upload/drive/v3/files?uploadType=media")
-                        .post(RequestBody.create(mediaMimeType, fileToUpload))
+                MediaType mediaType = MediaType.parse("application/json");
+                RequestBody body = RequestBody.create(mediaType, "{\"name\": \"" + fileToUpload.getName() + "\"}");
+                if (uploadToAppFolder) {
+                    body = RequestBody.create(mediaType, "{\"name\": \"" + fileToUpload.getName() + "\", \"parents\":[\"appDataFolder\"]}");
+                }
+                Request fileCreateRequest = new Request.Builder()
+                        .url("https://www.googleapis.com/drive/v3/files")
+                        .post(body)
                         .addHeader("Authorization", "Bearer " + gdAuthResponse.getAccessToken())
-                        .addHeader("Content-Type",fileMime)
-                        .addHeader("Content-Length","" + fileToUpload.length())
+                        .addHeader("accept", "application/json")
+                        .addHeader("content-type", "application/json")
                         .build();
 
                 try {
-                    Response response = getInstance().client.newCall(request).execute();
+                    Response fileCreateResponse = getInstance().client.newCall(fileCreateRequest).execute();
 
-                    JSONObject responseJSONObject = new JSONObject(response.body().string());
+                    JSONObject fileCreteResponseJSONObject = new JSONObject(fileCreateResponse.body().string());
 
-                    uploadFileListener.onSuccess(new GDUploadFileResponse(
-                            responseJSONObject.getString("id"),
-                            responseJSONObject.getString("name"),
-                            responseJSONObject.getString("mimeType"))
-                    );
+                    MediaType mediaMimeType = MediaType.parse(fileMime);
+
+                    Request fileUploadRequest = new Request.Builder()
+                            .url("https://www.googleapis.com/upload/drive/v3/files/" + fileCreteResponseJSONObject.getString("id") + "?uploadType=media")
+                            .patch(RequestBody.create(mediaMimeType, fileToUpload))
+                            .addHeader("Authorization", "Bearer " + gdAuthResponse.getAccessToken())
+                            .addHeader("Content-Type", fileMime)
+                            .addHeader("Content-Length", "" + fileToUpload.length())
+                            .build();
+
+                    try {
+                        Response fileUploadResponse = getInstance().client.newCall(fileUploadRequest).execute();
+
+                        JSONObject fileUploadResponseJSONObject = new JSONObject(fileUploadResponse.body().string());
+
+                        uploadFileListener.onSuccess(new GDUploadFileResponse(
+                                fileUploadResponseJSONObject.getString("id"),
+                                fileUploadResponseJSONObject.getString("name"),
+                                fileUploadResponseJSONObject.getString("mimeType"))
+                        );
+                    } catch (IOException | JSONException e) {
+                        e.printStackTrace();
+                        uploadFileListener.onError(new GDException(e.getMessage()));
+                    }
                 } catch (IOException | JSONException e) {
                     e.printStackTrace();
                     uploadFileListener.onError(new GDException(e.getMessage()));
