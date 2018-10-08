@@ -15,7 +15,7 @@ Add it in your root build.gradle at the end of repositories:
 Step 2. Add the dependency
 
 	dependencies {
-	        implementation 'com.github.tejpratap46.GoogleDriveRestExample:gogledriverest:1.0'
+	        implementation 'com.github.tejpratap46.GoogleDriveRestExample:gogledriverest:1.1'
 	}
 
 
