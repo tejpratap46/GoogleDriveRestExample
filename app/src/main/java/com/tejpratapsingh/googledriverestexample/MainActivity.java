@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         GDFileManager.getInstance().saveStringToFile(tempFile, "This is a test file");
 
-                        GDApiManager.getInstance().uploadFile(gdAuthResponse, tempFile, GDFileManager.getInstance().getMimeType(getApplicationContext(), tempFile), new GDUploadFileResponse.OnUploadFileCompleteListener() {
+                        GDApiManager.getInstance().uploadFile(gdAuthResponse, tempFile, GDFileManager.getInstance().getMimeType(getApplicationContext(), tempFile), true, new GDUploadFileResponse.OnUploadFileCompleteListener() {
                             @Override
                             public void onSuccess(GDUploadFileResponse uploadFileResponse) {
                                 // Download just uploaded file
