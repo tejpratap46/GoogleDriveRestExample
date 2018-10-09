@@ -1,4 +1,4 @@
-package com.tejpratapsingh.gogledriverest.auth;
+package com.tejpratapsingh.googledriverest.auth;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -8,11 +8,11 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import com.tejpratapsingh.gogledriverest.Helper.GDConstants;
-import com.tejpratapsingh.gogledriverest.Helper.GDException;
-import com.tejpratapsingh.gogledriverest.Helper.GDUtilities;
-import com.tejpratapsingh.gogledriverest.api.GDApiManager;
-import com.tejpratapsingh.gogledriverest.modal.GDAuthResponse;
+import com.tejpratapsingh.googledriverest.Helper.GDConstants;
+import com.tejpratapsingh.googledriverest.Helper.GDException;
+import com.tejpratapsingh.googledriverest.Helper.GDUtilities;
+import com.tejpratapsingh.googledriverest.api.GDApiManager;
+import com.tejpratapsingh.googledriverest.modal.GDAuthResponse;
 
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -70,7 +70,7 @@ public class GDAuthManager {
                             String code = GDUtilities.splitQuery(urlObject).get("code");
 
                             GDApiManager gdApiManager = GDApiManager.getInstance();
-                            gdApiManager.getGetAuthCode(code, config, new GDAuthResponse.OnAuthResponseListener() {
+                            gdApiManager.getGetAuthCodeAsync(code, config, new GDAuthResponse.OnAuthResponseListener() {
                                 @Override
                                 public void onSuccess(GDAuthResponse gdAuthResponse) {
 

@@ -1,4 +1,4 @@
-package com.tejpratapsingh.gogledriverest.Helper;
+package com.tejpratapsingh.googledriverest.Helper;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URL;

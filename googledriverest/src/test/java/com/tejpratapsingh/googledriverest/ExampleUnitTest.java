@@ -1,4 +1,4 @@
-package com.tejpratapsingh.gogledriverest;
+package com.tejpratapsingh.googledriverest;
 
 import org.junit.Test;
 

@@ -1,11 +1,11 @@
-package com.tejpratapsingh.gogledriverest.auth;
+package com.tejpratapsingh.googledriverest.auth;
 
 import android.text.TextUtils;
 
 import java.util.ArrayList;
 import java.util.Locale;
 
-import com.tejpratapsingh.gogledriverest.Helper.GDException;
+import com.tejpratapsingh.googledriverest.Helper.GDException;
 
 public class GDAuthConfig {
 

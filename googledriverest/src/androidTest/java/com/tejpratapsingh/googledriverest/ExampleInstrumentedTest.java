@@ -1,4 +1,4 @@
-package com.tejpratapsingh.gogledriverest;
+package com.tejpratapsingh.googledriverest;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("com.tejpratapsingh.gogledriverest.test", appContext.getPackageName());
+        assertEquals("com.tejpratapsingh.googledriverest.test", appContext.getPackageName());
     }
 }

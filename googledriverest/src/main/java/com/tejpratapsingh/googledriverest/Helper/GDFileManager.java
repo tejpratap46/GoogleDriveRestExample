@@ -1,4 +1,4 @@
-package com.tejpratapsingh.gogledriverest.Helper;
+package com.tejpratapsingh.googledriverest.Helper;
 
 import android.content.Context;
 import android.database.Cursor;

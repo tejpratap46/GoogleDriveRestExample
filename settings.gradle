@@ -1,1 +1,1 @@
-include ':app', ':gogledriverest'
+include ':app', ':gogledriverest', ':googledriverest'

@@ -1,6 +1,6 @@
-package com.tejpratapsingh.gogledriverest.modal;
+package com.tejpratapsingh.googledriverest.modal;
 
-import com.tejpratapsingh.gogledriverest.Helper.GDException;
+import com.tejpratapsingh.googledriverest.Helper.GDException;
 
 public class GDUploadFileResponse {
 
