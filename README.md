@@ -15,13 +15,13 @@ Add it in your root build.gradle at the end of repositories:
 Step 2. Add the dependency
 
 	dependencies {
-	        implementation 'com.github.tejpratap46.GoogleDriveRestExample:gogledriverest:1.1'
+	        implementation 'com.github.tejpratap46.GoogleDriveRestExample:googledriverest:1.1.1'
 	}
 
 
 # Example
 
-WebView webViewGoogleDrive = (WebView) findViewById(R.id.webViewGoogleDrive);
+        WebView webViewGoogleDrive = (WebView) findViewById(R.id.webViewGoogleDrive);
 
         GDAuthManager gdAuthManager = GDAuthManager.getInstance();
 
@@ -39,46 +39,51 @@ WebView webViewGoogleDrive = (WebView) findViewById(R.id.webViewGoogleDrive);
                 @Override
                 public void onSuccess(final GDAuthResponse gdAuthResponse) {
                     // Upload a file
+                    showToast("Google Drive Authenticated");
                     File tempFile = GDFileManager.getInstance().createTempFile(getApplicationContext(), "txt",  false);
                     try {
                         GDFileManager.getInstance().saveStringToFile(tempFile, "This is a test file");
 
-                        GDApiManager.getInstance().uploadFile(gdAuthResponse, tempFile, GDFileManager.getInstance().getMimeType(getApplicationContext(), tempFile), false, new GDUploadFileResponse.OnUploadFileCompleteListener() {
+                        GDApiManager.getInstance().uploadFileAsync(gdAuthResponse, tempFile, GDFileManager.getInstance().getMimeType(getApplicationContext(), tempFile), true, new GDUploadFileResponse.OnUploadFileCompleteListener() {
                             @Override
                             public void onSuccess(GDUploadFileResponse uploadFileResponse) {
+
+                                showToast("File Uploaded Successfully");
+                                
                                 // Download just uploaded file
-                                GDApiManager.getInstance().downloadFile(getApplicationContext(), gdAuthResponse, uploadFileResponse.getId(), "downloaded_file.txt", new GDDownloadFileResponse.OnDownloadFileCompleteListener() {
+                                GDApiManager.getInstance().downloadFileAsync(getApplicationContext(), gdAuthResponse, uploadFileResponse.getId(), "downloaded_file.txt", new GDDownloadFileResponse.OnDownloadFileCompleteListener() {
                                     @Override
                                     public void onSuccess(File downloadedFile) {
                                         // Check for a download file in your private files
                                         // In here: Internal Storage > Android > data > com.tejpratapsingh.com > files
+                                        showToast("File Downloaded Successfully");
                                     }
 
                                     @Override
                                     public void onError(GDException exception) {
-                                        Toast.makeText(MainActivity.this, exception.getMessage(), Toast.LENGTH_SHORT).show();
+                                        showToast("Error: " + exception.getMessage());
                                     }
                                 });
                             }
 
                             @Override
                             public void onError(GDException exception) {
-                                Toast.makeText(MainActivity.this, exception.getMessage(), Toast.LENGTH_SHORT).show();
+                                showToast("Error: " + exception.getMessage());
                             }
                         });
                     } catch (GDException e) {
                         e.printStackTrace();
-                        Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                        showToast("Error: " + e.getMessage());
                     }
                 }
 
                 @Override
                 public void onError(GDException exception) {
                     exception.printStackTrace();
-                    Toast.makeText(MainActivity.this, exception.getMessage(), Toast.LENGTH_SHORT).show();
+                    showToast("Error: " + exception.getMessage());
                 }
             });
         } catch (GDException e) {
             e.printStackTrace();
-            Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+            showToast("Error: " + e.getMessage());
         }
