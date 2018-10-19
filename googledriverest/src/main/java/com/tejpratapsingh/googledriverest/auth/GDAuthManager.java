@@ -77,6 +77,7 @@ public class GDAuthManager {
                                     SharedPreferences.Editor editor = webView.getContext().getSharedPreferences(GDConstants.GD_PREFS_NAME, MODE_PRIVATE).edit();
                                     editor.putString(GDConstants.GD_PREFS_ACCESS_TOKEN, gdAuthResponse.getAccessToken());
                                     editor.putString(GDConstants.GD_PREFS_REFRESH_TOKEN, gdAuthResponse.getRefreshToken());
+                                    editor.putInt(GDConstants.GD_PREFS_TOKEN_EXPIRES_AT, gdAuthResponse.getExpiresAtTimestamp());
                                     editor.apply();
 
                                     onGoogleAuthCompleteListener.onSuccess(gdAuthResponse);
@@ -104,11 +105,17 @@ public class GDAuthManager {
     public GDAuthResponse getAuthData(Context context) throws GDException {
         SharedPreferences preferences = context.getSharedPreferences(GDConstants.GD_PREFS_NAME, MODE_PRIVATE);
 
-        if (preferences.contains(GDConstants.GD_PREFS_ACCESS_TOKEN) == false || preferences.contains(GDConstants.GD_PREFS_REFRESH_TOKEN) == false) {
+        if (preferences.contains(GDConstants.GD_PREFS_ACCESS_TOKEN) == false
+                || preferences.contains(GDConstants.GD_PREFS_REFRESH_TOKEN) == false
+                || preferences.contains(GDConstants.GD_PREFS_TOKEN_EXPIRES_AT) == false) {
             throw new GDException("Google is still not Authenticated");
         }
 
-        return new GDAuthResponse(preferences.getString(GDConstants.GD_PREFS_ACCESS_TOKEN, null), preferences.getString(GDConstants.GD_PREFS_REFRESH_TOKEN, null));
+        return new GDAuthResponse(
+                preferences.getString(GDConstants.GD_PREFS_ACCESS_TOKEN, null),
+                preferences.getString(GDConstants.GD_PREFS_REFRESH_TOKEN, null),
+                preferences.getInt(GDConstants.GD_PREFS_TOKEN_EXPIRES_AT, 0)
+        );
     }
 
     private void enableHTML5AppCache(WebView mWebView) {

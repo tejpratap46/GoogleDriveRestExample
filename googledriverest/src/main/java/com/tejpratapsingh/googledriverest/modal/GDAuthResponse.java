@@ -11,10 +11,12 @@ public class GDAuthResponse {
     }
 
     private String accessToken, refreshToken;
+    private int expiresAtTimestamp;
 
-    public GDAuthResponse(String accessToken, String refreshToken) {
+    public GDAuthResponse(String accessToken, String refreshToken, int expiresInSec) {
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
+        this.expiresAtTimestamp = (int) (System.currentTimeMillis() / 1000) +  expiresInSec;
     }
 
     public String getAccessToken() {
@@ -23,5 +25,16 @@ public class GDAuthResponse {
 
     public String getRefreshToken() {
         return refreshToken;
+    }
+
+    public int getExpiresAtTimestamp() {
+        return expiresAtTimestamp;
+    }
+
+    public boolean isExpired() {
+        if ((int) (System.currentTimeMillis() / 1000) > this.expiresAtTimestamp) {
+            return true;
+        }
+        return false;
     }
 }

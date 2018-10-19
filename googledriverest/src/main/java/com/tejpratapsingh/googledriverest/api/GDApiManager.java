@@ -69,7 +69,11 @@ public class GDApiManager {
             try {
                 JSONObject responseJSON = new JSONObject(response.body().string());
 
-                return new GDAuthResponse(responseJSON.getString("access_token"), responseJSON.getString("refresh_token"));
+                return new GDAuthResponse(
+                        responseJSON.getString("access_token"),
+                        responseJSON.getString("refresh_token"),
+                        responseJSON.getInt("expires_in")
+                );
 
             } catch (JSONException e) {
                 e.printStackTrace();
