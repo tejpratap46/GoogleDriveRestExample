@@ -5,22 +5,25 @@ Google Drive REST API for android
 
 
 Add it in your root build.gradle at the end of repositories:
-
+```gradle
 	allprojects {
 		repositories {
 			...
 			maven { url 'https://jitpack.io' }
 		}
 	}
+```
 Step 2. Add the dependency
 
+```gradle
 	dependencies {
 	        implementation 'com.github.tejpratap46.GoogleDriveRestExample:googledriverest:1.2'
 	}
-
+```
 
 # Example
 
+```java
         WebView webViewGoogleDrive = (WebView) findViewById(R.id.webViewGoogleDrive);
 
         GDAuthManager gdAuthManager = GDAuthManager.getInstance();
@@ -35,7 +38,7 @@ Step 2. Add the dependency
                     "CLIENT_SECRET",
                     scopes);
 
-            gdAuthManager.startGoogleDriveAuth(webViewGoogleDrive, gdAuthConfig, new GDAuthManager.OnGoogleAuthCompleteListener() {
+            gdAuthManager.startGoogleDriveAuth(MainActivity.this, webViewGoogleDrive, this.gdAuthConfig, new GDAuthManager.OnGoogleAuthCompleteListener() {
                 @Override
                 public void onSuccess(final GDAuthResponse gdAuthResponse) {
                     // Upload a file
@@ -44,14 +47,14 @@ Step 2. Add the dependency
                     try {
                         GDFileManager.getInstance().saveStringToFile(tempFile, "This is a test file");
 
-                        GDApiManager.getInstance().uploadFileAsync(gdAuthResponse, tempFile, GDFileManager.getInstance().getMimeType(getApplicationContext(), tempFile), true, new GDUploadFileResponse.OnUploadFileCompleteListener() {
+                        GDApiManager.getInstance().uploadFileAsync(getApplicationContext(), gdAuthResponse, MainActivity.this.gdAuthConfig, tempFile, GDFileManager.getInstance().getMimeType(getApplicationContext(), tempFile), true, new GDUploadFileResponse.OnUploadFileCompleteListener() {
                             @Override
                             public void onSuccess(GDUploadFileResponse uploadFileResponse) {
 
                                 showToast("File Uploaded Successfully");
                                 
                                 // Download just uploaded file
-                                GDApiManager.getInstance().downloadFileAsync(getApplicationContext(), gdAuthResponse, uploadFileResponse.getId(), "downloaded_file.txt", new GDDownloadFileResponse.OnDownloadFileCompleteListener() {
+                                GDApiManager.getInstance().downloadFileAsync(getApplicationContext(), gdAuthResponse, MainActivity.this.gdAuthConfig, uploadFileResponse.getId(), "downloaded_file.txt", new GDDownloadFileResponse.OnDownloadFileCompleteListener() {
                                     @Override
                                     public void onSuccess(File downloadedFile) {
                                         // Check for a download file in your private files
@@ -87,3 +90,4 @@ Step 2. Add the dependency
             e.printStackTrace();
             showToast("Error: " + e.getMessage());
         }
+```
