@@ -1,9 +1,11 @@
 package com.tejpratapsingh.googledriverest.api;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.tejpratapsingh.googledriverest.Helper.GDConstants;
 import com.tejpratapsingh.googledriverest.Helper.GDException;
 import com.tejpratapsingh.googledriverest.Helper.GDFileManager;
 import com.tejpratapsingh.googledriverest.auth.GDAuthConfig;
@@ -18,12 +20,15 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Locale;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+
+import static android.content.Context.MODE_PRIVATE;
 
 public class GDApiManager {
     private static final String TAG = "GDApiManager";
@@ -37,15 +42,15 @@ public class GDApiManager {
     }
 
     private GDApiManager() {
-        client = new OkHttpClient();
+        this.client = new OkHttpClient();
     }
 
-    public void getGetAuthCodeAsync(final String code, final GDAuthConfig config, final GDAuthResponse.OnAuthResponseListener onAuthResponseListener) {
+    public void getAuthFromCodeAsync(final String code, final GDAuthConfig config, final GDAuthResponse.OnAuthResponseListener onAuthResponseListener) {
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    onAuthResponseListener.onSuccess(getInstance().getGetAuthCode(code, config));
+                    onAuthResponseListener.onSuccess(getInstance().getAuthFromCode(code, config));
                 } catch (GDException e) {
                     onAuthResponseListener.onError(e);
                 }
@@ -53,7 +58,7 @@ public class GDApiManager {
         });
     }
 
-    public GDAuthResponse getGetAuthCode(final String code, final GDAuthConfig config) throws GDException {
+    public GDAuthResponse getAuthFromCode(final String code, final GDAuthConfig config) throws GDException {
         String requestBody = String.format("code=%s&client_id=%s&client_secret=%s&redirect_uri=%s&grant_type=authorization_code", code, config.getClientId(), config.getClientSecret(), config.getRedirectURI());
 
         MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
@@ -69,17 +74,73 @@ public class GDApiManager {
             try {
                 JSONObject responseJSON = new JSONObject(response.body().string());
 
-                return new GDAuthResponse(
+                GDAuthResponse gdAuthResponse = new GDAuthResponse(
                         responseJSON.getString("access_token"),
                         responseJSON.getString("refresh_token"),
-                        responseJSON.getInt("expires_in")
+                        (System.currentTimeMillis() / 1000) + responseJSON.getLong("expires_in")
                 );
+
+                return gdAuthResponse;
 
             } catch (JSONException e) {
                 e.printStackTrace();
                 throw new GDException(e.getMessage());
             }
 
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new GDException(e.getMessage());
+        }
+    }
+
+    public void getAuthFromRefreshTokenAsync(final Context context, final GDAuthResponse previousAuthResponse, final GDAuthConfig config, final GDAuthResponse.OnAuthResponseListener onAuthResponseListener) {
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    onAuthResponseListener.onSuccess(getInstance().getAuthFromRefreshToken(context, previousAuthResponse, config));
+                } catch (GDException e) {
+                    onAuthResponseListener.onError(e);
+                }
+            }
+        });
+    }
+
+    public GDAuthResponse getAuthFromRefreshToken(final Context context, final GDAuthResponse previousAuthResponse, final GDAuthConfig config) throws GDException {
+        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
+        RequestBody body = RequestBody.create(
+                mediaType, String.format(Locale.getDefault(), "client_id=%s&client_secret=%s&redirect_uri=%s&grant_type=refresh_token&refresh_token=%s", config.getClientId(), config.getClientSecret(), config.getRedirectURI(), previousAuthResponse.getRefreshToken())
+        );
+        Request request = new Request.Builder()
+                .url("https://www.googleapis.com/oauth2/v4/token")
+                .post(body)
+                .addHeader("cache-control", "no-cache")
+                .addHeader("content-type", "application/x-www-form-urlencoded")
+                .build();
+
+        try {
+            Response response = getInstance().client.newCall(request).execute();
+            try {
+                JSONObject responseJSON = new JSONObject(response.body().string());
+
+                GDAuthResponse gdAuthResponse = new GDAuthResponse(
+                        responseJSON.getString("access_token"),
+                        previousAuthResponse.getRefreshToken(),
+                        (System.currentTimeMillis() / 1000) + responseJSON.getInt("expires_in")
+                );
+
+                SharedPreferences.Editor editor = context.getSharedPreferences(GDConstants.GD_PREFS_NAME, MODE_PRIVATE).edit();
+                editor.putString(GDConstants.GD_PREFS_ACCESS_TOKEN, gdAuthResponse.getAccessToken());
+                editor.putString(GDConstants.GD_PREFS_REFRESH_TOKEN, gdAuthResponse.getRefreshToken());
+                editor.putLong(GDConstants.GD_PREFS_TOKEN_EXPIRES_AT, gdAuthResponse.getExpiresAtTimestamp());
+                editor.apply();
+
+                return gdAuthResponse;
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+                throw new GDException(e.getMessage());
+            }
         } catch (IOException e) {
             e.printStackTrace();
             throw new GDException(e.getMessage());
@@ -93,12 +154,12 @@ public class GDApiManager {
      * @param gdAuthResponse             Auth credentials
      * @param onUserInfoReceivedListener onComplete event listener
      */
-    public void getUserInfoAsync(final GDAuthResponse gdAuthResponse, final GDUserInfo.OnUserInfoReceivedListener onUserInfoReceivedListener) {
+    public void getUserInfoAsync(final Context context, final GDAuthResponse gdAuthResponse, final GDAuthConfig authConfig, final GDUserInfo.OnUserInfoReceivedListener onUserInfoReceivedListener) {
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    onUserInfoReceivedListener.onSuccess(getInstance().getUserInfo(gdAuthResponse));
+                    onUserInfoReceivedListener.onSuccess(getInstance().getUserInfo(context, gdAuthResponse, authConfig));
                 } catch (GDException e) {
                     e.printStackTrace();
                     onUserInfoReceivedListener.onError(e);
@@ -115,7 +176,12 @@ public class GDApiManager {
      * @return user info
      * @throws GDException if any error occurred
      */
-    public GDUserInfo getUserInfo(final GDAuthResponse gdAuthResponse) throws GDException {
+    public GDUserInfo getUserInfo(final Context context, GDAuthResponse gdAuthResponse, final GDAuthConfig authConfig) throws GDException {
+
+        if (gdAuthResponse.isExpired()) {
+            // Get access token again from refresh token
+            gdAuthResponse = this.getAuthFromRefreshToken(context, gdAuthResponse, authConfig);
+        }
         Request request = new Request.Builder()
                 .url("https://www.googleapis.com/oauth2/v3/userinfo?access_token=" + gdAuthResponse.getAccessToken())
                 .get()
@@ -151,12 +217,12 @@ public class GDApiManager {
      * @param uploadToAppFolder  true if you want to use app folder in google drive (files won't be visible to user)
      * @param uploadFileListener listener for success or exception
      */
-    public void uploadFileAsync(final GDAuthResponse gdAuthResponse, final File fileToUpload, final String fileMime, final boolean uploadToAppFolder, final GDUploadFileResponse.OnUploadFileCompleteListener uploadFileListener) {
+    public void uploadFileAsync(final Context context, final GDAuthResponse gdAuthResponse, final GDAuthConfig authConfig, final File fileToUpload, final String fileMime, final boolean uploadToAppFolder, final GDUploadFileResponse.OnUploadFileCompleteListener uploadFileListener) {
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    GDUploadFileResponse gdUploadFileResponse = getInstance().uploadFile(gdAuthResponse, fileToUpload, fileMime, uploadToAppFolder);
+                    GDUploadFileResponse gdUploadFileResponse = getInstance().uploadFile(context, gdAuthResponse, authConfig, fileToUpload, fileMime, uploadToAppFolder);
                     uploadFileListener.onSuccess(gdUploadFileResponse);
                 } catch (GDException e) {
                     uploadFileListener.onError(e);
@@ -175,7 +241,12 @@ public class GDApiManager {
      * @return GDUploadFileResponse object with fileId and name
      * @throws GDException if any error occurred
      */
-    public GDUploadFileResponse uploadFile(final GDAuthResponse gdAuthResponse, final File fileToUpload, final String fileMime, final boolean uploadToAppFolder) throws GDException {
+    public GDUploadFileResponse uploadFile(final Context context, GDAuthResponse gdAuthResponse, final GDAuthConfig authConfig, final File fileToUpload, final String fileMime, final boolean uploadToAppFolder) throws GDException {
+
+        if (gdAuthResponse.isExpired()) {
+            // Get access token again from refresh token
+            gdAuthResponse = this.getAuthFromRefreshToken(context, gdAuthResponse, authConfig);
+        }
         MediaType mediaType = MediaType.parse("application/json");
         RequestBody body = RequestBody.create(mediaType, "{\"name\": \"" + fileToUpload.getName() + "\"}");
         if (uploadToAppFolder) {
@@ -234,12 +305,12 @@ public class GDApiManager {
      * @param fileName                     name of saved file
      * @param downloadFileCompleteListener on complete event
      */
-    public void downloadFileAsync(final Context context, final GDAuthResponse gdAuthResponse, final String gdFileId, final String fileName, final GDDownloadFileResponse.OnDownloadFileCompleteListener downloadFileCompleteListener) {
+    public void downloadFileAsync(final Context context, final GDAuthResponse gdAuthResponse, final GDAuthConfig authConfig, final String gdFileId, final String fileName, final GDDownloadFileResponse.OnDownloadFileCompleteListener downloadFileCompleteListener) {
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    downloadFileCompleteListener.onSuccess(getInstance().downloadFile(context, gdAuthResponse, gdFileId, fileName));
+                    downloadFileCompleteListener.onSuccess(getInstance().downloadFile(context, gdAuthResponse, authConfig, gdFileId, fileName));
                 } catch (GDException e) {
                     downloadFileCompleteListener.onError(e);
                 }
@@ -258,9 +329,12 @@ public class GDApiManager {
      * @return saved File
      * @throws GDException if any error occurred
      */
-    public File downloadFile(final Context context, final GDAuthResponse gdAuthResponse, final String gdFileId, final String fileName) throws GDException {
-        OkHttpClient client = new OkHttpClient();
+    public File downloadFile(final Context context, GDAuthResponse gdAuthResponse, final GDAuthConfig authConfig, final String gdFileId, final String fileName) throws GDException {
 
+        if (gdAuthResponse.isExpired()) {
+            // Get access token again from refresh token
+            gdAuthResponse = this.getAuthFromRefreshToken(context, gdAuthResponse, authConfig);
+        }
         Request request = new Request.Builder()
                 .url("https://www.googleapis.com/drive/v3/files/" + gdFileId + "?alt=media")
                 .get()
@@ -268,7 +342,7 @@ public class GDApiManager {
                 .build();
 
         try {
-            Response response = client.newCall(request).execute();
+            Response response = getInstance().client.newCall(request).execute();
             InputStream fileInputStream = response.body().byteStream();
 
             File savedFile = GDFileManager.getInstance().saveFileToPrivateStorageFromInputStream(context, fileInputStream, fileName, true);

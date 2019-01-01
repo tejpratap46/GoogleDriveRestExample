@@ -1,8 +1,10 @@
 package com.tejpratapsingh.googledriverest.auth;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
+import android.util.Log;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -22,7 +24,7 @@ import static android.content.Context.MODE_PRIVATE;
 
 public class GDAuthManager {
 
-    private static final String GD_PREFS_NAME = "GD_PREFS";
+    private static final String TAG = "GDAuthManager";
 
     public interface OnGoogleAuthCompleteListener {
         void onSuccess(GDAuthResponse gdAuthResponse);
@@ -38,7 +40,18 @@ public class GDAuthManager {
     private GDAuthManager() {
     }
 
-    public void startGoogleDriveAuth(final WebView webView, final GDAuthConfig config, final OnGoogleAuthCompleteListener onGoogleAuthCompleteListener) {
+    public void startGoogleDriveAuth(final Activity activity, final WebView webView, final GDAuthConfig config, final OnGoogleAuthCompleteListener onGoogleAuthCompleteListener) {
+
+        try {
+            GDAuthResponse gdAuthResponse = getAuthData(activity.getApplicationContext());
+            if (gdAuthResponse.isExpired() == false) {
+                onGoogleAuthCompleteListener.onSuccess(gdAuthResponse);
+                Log.d(TAG, "startGoogleDriveAuth: OLD AUTH IS NOT EXPIRED, USE it");
+                return;
+            }
+        } catch (GDException e) {
+            e.printStackTrace();
+        }
 
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setSupportMultipleWindows(true);
@@ -70,17 +83,21 @@ public class GDAuthManager {
                             String code = GDUtilities.splitQuery(urlObject).get("code");
 
                             GDApiManager gdApiManager = GDApiManager.getInstance();
-                            gdApiManager.getGetAuthCodeAsync(code, config, new GDAuthResponse.OnAuthResponseListener() {
+                            gdApiManager.getAuthFromCodeAsync(code, config, new GDAuthResponse.OnAuthResponseListener() {
                                 @Override
-                                public void onSuccess(GDAuthResponse gdAuthResponse) {
-
-                                    SharedPreferences.Editor editor = webView.getContext().getSharedPreferences(GDConstants.GD_PREFS_NAME, MODE_PRIVATE).edit();
-                                    editor.putString(GDConstants.GD_PREFS_ACCESS_TOKEN, gdAuthResponse.getAccessToken());
-                                    editor.putString(GDConstants.GD_PREFS_REFRESH_TOKEN, gdAuthResponse.getRefreshToken());
-                                    editor.putInt(GDConstants.GD_PREFS_TOKEN_EXPIRES_AT, gdAuthResponse.getExpiresAtTimestamp());
-                                    editor.apply();
-
-                                    onGoogleAuthCompleteListener.onSuccess(gdAuthResponse);
+                                public void onSuccess(final GDAuthResponse gdAuthResponse) {
+                                    activity.runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            SharedPreferences.Editor editor = activity.getSharedPreferences(GDConstants.GD_PREFS_NAME, MODE_PRIVATE).edit();
+                                            editor.putString(GDConstants.GD_PREFS_ACCESS_TOKEN, gdAuthResponse.getAccessToken());
+                                            editor.putString(GDConstants.GD_PREFS_REFRESH_TOKEN, gdAuthResponse.getRefreshToken());
+                                            editor.putLong(GDConstants.GD_PREFS_TOKEN_EXPIRES_AT, gdAuthResponse.getExpiresAtTimestamp());
+                                            if (editor.commit()) {
+                                                onGoogleAuthCompleteListener.onSuccess(gdAuthResponse);
+                                            }
+                                        }
+                                    });
                                 }
 
                                 @Override
@@ -114,7 +131,7 @@ public class GDAuthManager {
         return new GDAuthResponse(
                 preferences.getString(GDConstants.GD_PREFS_ACCESS_TOKEN, null),
                 preferences.getString(GDConstants.GD_PREFS_REFRESH_TOKEN, null),
-                preferences.getInt(GDConstants.GD_PREFS_TOKEN_EXPIRES_AT, 0)
+                preferences.getLong(GDConstants.GD_PREFS_TOKEN_EXPIRES_AT, 0)
         );
     }
 
