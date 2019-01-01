@@ -2,7 +2,6 @@ package com.tejpratapsingh.googledriverestexample;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.webkit.WebView;
 import android.widget.Toast;
 

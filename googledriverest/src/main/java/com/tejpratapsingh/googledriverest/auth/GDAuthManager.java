@@ -135,6 +135,15 @@ public class GDAuthManager {
         );
     }
 
+    public void clearCachedAuthData(Context context) {
+        SharedPreferences preferences = context.getSharedPreferences(GDConstants.GD_PREFS_NAME, MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.remove(GDConstants.GD_PREFS_ACCESS_TOKEN);
+        editor.remove(GDConstants.GD_PREFS_REFRESH_TOKEN);
+        editor.remove(GDConstants.GD_PREFS_TOKEN_EXPIRES_AT);
+        editor.commit();
+    }
+
     private void enableHTML5AppCache(WebView mWebView) {
 
         mWebView.getSettings().setDomStorageEnabled(true);
