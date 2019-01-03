@@ -365,7 +365,7 @@ public class GDApiManager {
      * @param gdFileId                     fileId to delete
      * @param deleteFileCompleteListener on complete event
      */
-    public void deleteFileAsync(final Context context, final GDAuthResponse gdAuthResponse, final GDAuthConfig authConfig, final String gdFileId, final String fileName, final GDDeleteFileResponse.OnDeleteFileListener deleteFileCompleteListener) {
+    public void deleteFileAsync(final Context context, final GDAuthResponse gdAuthResponse, final GDAuthConfig authConfig, final String gdFileId, final GDDeleteFileResponse.OnDeleteFileListener deleteFileCompleteListener) {
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
