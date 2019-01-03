@@ -10,6 +10,7 @@ import com.tejpratapsingh.googledriverest.Helper.GDException;
 import com.tejpratapsingh.googledriverest.Helper.GDFileManager;
 import com.tejpratapsingh.googledriverest.auth.GDAuthConfig;
 import com.tejpratapsingh.googledriverest.modal.GDAuthResponse;
+import com.tejpratapsingh.googledriverest.modal.GDDeleteFileResponse;
 import com.tejpratapsingh.googledriverest.modal.GDDownloadFileResponse;
 import com.tejpratapsingh.googledriverest.modal.GDUploadFileResponse;
 import com.tejpratapsingh.googledriverest.modal.GDUserInfo;
@@ -349,6 +350,66 @@ public class GDApiManager {
 
             return savedFile;
         } catch (IOException | GDException e) {
+            e.printStackTrace();
+            throw new GDException(e.getMessage());
+        }
+
+    }
+
+
+    /**
+     * Download file in BACKGROUND thread
+     *
+     * @param context                      to get local folder of application
+     * @param gdAuthResponse               Auth credentials
+     * @param gdFileId                     fileId to delete
+     * @param deleteFileCompleteListener on complete event
+     */
+    public void deleteFileAsync(final Context context, final GDAuthResponse gdAuthResponse, final GDAuthConfig authConfig, final String gdFileId, final String fileName, final GDDeleteFileResponse.OnDeleteFileListener deleteFileCompleteListener) {
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Boolean isFileDeleted = getInstance().deleteFile(context, gdAuthResponse, authConfig, gdFileId);
+                    if (isFileDeleted) {
+                        deleteFileCompleteListener.onSucess();
+                    } else {
+                        deleteFileCompleteListener.onError(null);
+                    }
+                } catch (GDException e) {
+                    deleteFileCompleteListener.onError(e);
+                }
+            }
+        });
+    }
+
+
+    /**
+     * Download file in CURRENT thread
+     *
+     * @param context        to get local folder of application
+     * @param gdAuthResponse Auth credentials
+     * @param gdFileId       fileId to delete
+     * @return true if file deleted
+     * @throws GDException if any error occurred
+     */
+    public Boolean deleteFile(final Context context, GDAuthResponse gdAuthResponse, final GDAuthConfig authConfig, final String gdFileId) throws GDException {
+
+        if (gdAuthResponse.isExpired()) {
+            // Get access token again from refresh token
+            gdAuthResponse = this.getAuthFromRefreshToken(context, gdAuthResponse, authConfig);
+        }
+        Request request = new Request.Builder()
+                .url("https://www.googleapis.com/drive/v3/files/" + gdFileId)
+                .delete()
+                .addHeader("authorization", "Bearer " + gdAuthResponse.getAccessToken())
+                .build();
+
+        try {
+            Response response = getInstance().client.newCall(request).execute();
+
+            return response.isSuccessful();
+        } catch (IOException e) {
             e.printStackTrace();
             throw new GDException(e.getMessage());
         }
