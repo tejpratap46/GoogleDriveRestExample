@@ -38,7 +38,25 @@ Step 2. Add the dependency
                     "CLIENT_SECRET",
                     scopes);
 
+            final ProgressDialog loadingDialog = new ProgressDialog(this); // this = YourActivity
+            loadingDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            loadingDialog.setTitle("Loading");
+            loadingDialog.setMessage("Loading. Please wait...");
+            loadingDialog.setIndeterminate(true);
+            loadingDialog.setCanceledOnTouchOutside(false);
+
             gdAuthManager.startGoogleDriveAuth(MainActivity.this, webViewGoogleDrive, this.gdAuthConfig, new GDAuthManager.OnGoogleAuthCompleteListener() {
+                @Override
+                public void onLoadingStart() {
+                    // Show loading alert
+                    loadingDialog.show();
+                }
+
+                @Override
+                public void onLoadingFinish() {
+                    loadingDialog.dismiss();
+                }
+		
                 @Override
                 public void onSuccess(final GDAuthResponse gdAuthResponse) {
                     // Upload a file
