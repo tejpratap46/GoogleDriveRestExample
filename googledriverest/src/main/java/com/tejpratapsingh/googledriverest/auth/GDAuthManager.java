@@ -27,7 +27,13 @@ public class GDAuthManager {
     private static final String TAG = "GDAuthManager";
 
     public interface OnGoogleAuthCompleteListener {
+        // Web browser is loading page
+        void onLoadingStart();
+        // Web browser finished loading page
+        void onLoadingFinish();
+        // Finished with success
         void onSuccess(GDAuthResponse gdAuthResponse);
+        // Finished with error
         void onError(GDException exception);
     }
 
@@ -70,9 +76,10 @@ public class GDAuthManager {
         enableHTML5AppCache(webView);
 
         webView.loadUrl(config.getAuthURL());
-
+        onGoogleAuthCompleteListener.onLoadingStart();
         webView.setWebViewClient(new WebViewClient() {
             public void onPageFinished(WebView view, String url) {
+                onGoogleAuthCompleteListener.onLoadingFinish();
                 // do your stuff here
                 if (url.toLowerCase().startsWith(config.getRedirectURI())) {
                     // DO Auth API CALLS
