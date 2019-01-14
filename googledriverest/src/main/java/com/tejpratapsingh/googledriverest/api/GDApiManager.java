@@ -344,11 +344,15 @@ public class GDApiManager {
 
         try {
             Response response = getInstance().client.newCall(request).execute();
-            InputStream fileInputStream = response.body().byteStream();
+            if (response.isSuccessful()) {
+                InputStream fileInputStream = response.body().byteStream();
 
-            File savedFile = GDFileManager.getInstance().saveFileToPrivateStorageFromInputStream(context, fileInputStream, fileName, true);
+                File savedFile = GDFileManager.getInstance().saveFileToPrivateStorageFromInputStream(context, fileInputStream, fileName, true);
 
-            return savedFile;
+                return savedFile;
+            } else {
+                throw new GDException("File not found on Google Drive");
+            }
         } catch (IOException | GDException e) {
             e.printStackTrace();
             throw new GDException(e.getMessage());
