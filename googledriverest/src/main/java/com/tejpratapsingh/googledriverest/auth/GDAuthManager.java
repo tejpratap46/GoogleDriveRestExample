@@ -81,18 +81,22 @@ public class GDAuthManager {
             public void onPageFinished(WebView view, String url) {
                 onGoogleAuthCompleteListener.onLoadingFinish();
                 // do your stuff here
-                if (url.toLowerCase().startsWith(config.getRedirectURI())) {
+                Log.d(TAG, "onPageFinished: Current URL: " + url);
+                Log.d(TAG, "onPageFinished: url.matched: " + url.toLowerCase().startsWith(config.getRedirectURI().toLowerCase()));
+                if (url.toLowerCase().startsWith(config.getRedirectURI().toLowerCase())) {
                     // DO Auth API CALLS
-
                     try {
                         URL urlObject = new URL(url);
                         try {
                             String code = GDUtilities.splitQuery(urlObject).get("code");
+                            Log.d(TAG, "onPageFinished: Auth Finished with code: " + code);
+                            Log.d(TAG, "onPageFinished: Getting access code from request code");
 
                             GDApiManager gdApiManager = GDApiManager.getInstance();
                             gdApiManager.getAuthFromCodeAsync(code, config, new GDAuthResponse.OnAuthResponseListener() {
                                 @Override
                                 public void onSuccess(final GDAuthResponse gdAuthResponse) {
+                                    Log.d(TAG, "onSuccess: Auth Finished: " + gdAuthResponse.toString());
                                     activity.runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
