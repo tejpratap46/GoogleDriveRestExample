@@ -62,7 +62,9 @@ public class GDAuthManager {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setSupportMultipleWindows(true);
         webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
-        webView.getSettings().setUserAgentString("Mozilla/5.0 (Linux; Android 5.0; SM-G900P Build/LRX21T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36");
+        String userAgent = String.format("%s", webView.getSettings().getUserAgentString().replace("; wv)", ")"));
+        Log.d(TAG, "onCreateWindow: userAgent: " + userAgent);
+        webView.getSettings().setUserAgentString(userAgent);
         webView.getSettings().setGeolocationEnabled(true);
         webView.getSettings().setUseWideViewPort(true);
         webView.getSettings().setLoadWithOverviewMode(true);
@@ -178,7 +180,6 @@ public class GDAuthManager {
             WebView newWebView = new WebView(view.getContext());
 
             newWebView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
-            newWebView.getSettings().setUserAgentString("Mozilla/5.0 (Linux; Android 5.0; SM-G900P Build/LRX21T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36");
             newWebView.getSettings().setLoadWithOverviewMode(true);
             newWebView.getSettings().setAllowContentAccess(true);
             newWebView.getSettings().setDatabaseEnabled(true);
