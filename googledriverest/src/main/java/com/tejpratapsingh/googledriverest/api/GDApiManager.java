@@ -194,10 +194,10 @@ public class GDApiManager {
             try {
                 JSONObject userJSONObject = new JSONObject(response.body().string());
 
-                return new GDUserInfo(userJSONObject.getString("name"),
-                        userJSONObject.getString("email"),
-                        userJSONObject.getString("profile"),
-                        userJSONObject.getString("picture"));
+                return new GDUserInfo(userJSONObject.has("name") ? userJSONObject.getString("name") : "",
+                        userJSONObject.getString("email"), // Email is not optional
+                        userJSONObject.has("profile") ? userJSONObject.getString("profile") : "",
+                        userJSONObject.has("picture") ? userJSONObject.getString("picture") : "");
 
             } catch (JSONException e) {
                 e.printStackTrace();
