@@ -38,8 +38,6 @@ public class GDAuthConfig {
             throw new GDException("redirectURI cannot be null");
         } else if (clientId == null || clientId.isEmpty()) {
             throw new GDException("clientId cannot be null");
-        } else if (clientSecret == null || clientSecret.isEmpty()) {
-            throw new GDException("clientSecret cannot be null");
         } else if (scopes == null || scopes.size() == 0) {
             throw new GDException("scopes cannot be empty");
         }

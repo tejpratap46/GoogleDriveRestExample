@@ -138,7 +138,7 @@ public class GDAuthManager {
         if (preferences.contains(GDConstants.GD_PREFS_ACCESS_TOKEN) == false
                 || preferences.contains(GDConstants.GD_PREFS_REFRESH_TOKEN) == false
                 || preferences.contains(GDConstants.GD_PREFS_TOKEN_EXPIRES_AT) == false) {
-            throw new GDException("Google is still not Authenticated");
+            throw new GDException("You did not use GDAuthResponse.getInstance().setAuthData() [to persist auth data.]");
         }
 
         return new GDAuthResponse(
@@ -146,6 +146,14 @@ public class GDAuthManager {
                 preferences.getString(GDConstants.GD_PREFS_REFRESH_TOKEN, null),
                 preferences.getLong(GDConstants.GD_PREFS_TOKEN_EXPIRES_AT, 0)
         );
+    }
+
+    public Boolean setAuthData(Activity activity, GDAuthResponse authData) {
+        SharedPreferences.Editor editor = activity.getSharedPreferences(GDConstants.GD_PREFS_NAME, MODE_PRIVATE).edit();
+        editor.putString(GDConstants.GD_PREFS_ACCESS_TOKEN, authData.getAccessToken());
+        editor.putString(GDConstants.GD_PREFS_REFRESH_TOKEN, authData.getRefreshToken());
+        editor.putLong(GDConstants.GD_PREFS_TOKEN_EXPIRES_AT, authData.getExpiresAtTimestamp());
+        return editor.commit();
     }
 
     public void clearCachedAuthData(Context context) {
