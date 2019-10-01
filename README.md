@@ -1,4 +1,4 @@
-# GoogleDriveRestExample
+# GoogleDriveRestExample [DEPRECATED] use [Google-Drive-REST-Android](https://github.com/tejpratap46/Google-Drive-REST-Android)
 Google Drive REST API for android
 
 [![](https://jitpack.io/v/tejpratap46/GoogleDriveRestExample.svg)](https://jitpack.io/#tejpratap46/GoogleDriveRestExample)
